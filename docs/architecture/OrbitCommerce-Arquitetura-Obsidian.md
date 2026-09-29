@@ -1837,13 +1837,13 @@ Esta seção detalha, passo a passo, os quatro fluxos de execução mais importa
 
 ### 4.1 Autenticação e Validação de Token
 
-![[30-seq-login.png]]
+![!\[\[30-seq-login.png\]\]](img/30-seq-login.png)
 
 > [!info]- Figura 4.1 — Sequência de Login e Validação de Token Fluxo de login emitindo par de tokens (access + refresh), seguido de uma requisição subsequente autenticada, ilustrando a validação local de JWT no Gateway (via JWKS) combinada com verificação de sessão ativa no Identity Service.
 
 ### 4.2 Criação de Pedido — Saga (Caminho Feliz)
 
-![[31-seq-place-order-happy.png]]
+![[31-seq-place-order-happy.png]](img/31-seq-place-order-happy.png)
 
 > [!info]- Figura 4.2 — Sequência completa da Saga de Criação de Pedido (caminho feliz) Fluxo completo desde a requisição do cliente até a notificação de confirmação, passando pelas três etapas coordenadas da saga: reserva de estoque, autorização de pagamento e criação de remessa.
 > 
@@ -1851,7 +1851,7 @@ Esta seção detalha, passo a passo, os quatro fluxos de execução mais importa
 
 ### 4.3 Saga — Fluxo de Compensação
 
-![[32-seq-saga-compensation.png]]
+![[32-seq-saga-compensation.png]](img/32-seq-saga-compensation.png)
 
 > [!info]- Figura 4.3 — Sequência de Compensação da Saga (falha no pagamento) Cenário em que o gateway de pagamento recusa a transação após o estoque já ter sido reservado. O Order Service detecta a falha via evento `payment.failed`, transiciona a saga para `COMPENSATING` e dispara o comando de liberação de estoque, finalizando o pedido em `FAILED` apenas após a confirmação de que a compensação foi aplicada.
 
@@ -1859,7 +1859,7 @@ Esta seção detalha, passo a passo, os quatro fluxos de execução mais importa
 
 ### 4.4 Consulta de Catálogo com Cache Redis
 
-![[33-seq-catalog-cache.png]]
+![[33-seq-catalog-cache.png]](img/33-seq-catalog-cache.png)
 
 > [!info]- Figura 4.4 — Sequência de Leitura de Produto com Cache-Aside Padrão cache-aside aplicado à leitura de produto individual, com TTL de 300 segundos e fallback transparente ao PostgreSQL em caso de cache miss.
 
