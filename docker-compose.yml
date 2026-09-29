@@ -1,0 +1,322 @@
+# =============================================================================
+# OrbitCommerce — Ambiente Local de Desenvolvimento
+# =============================================================================
+# Uso:
+#   docker-compose up -d postgres redis kafka rabbitmq        # só infra
+#   docker-compose up -d --build identity-service              # infra + 1 serviço
+#   docker-compose up -d --build                                # tudo
+#
+# =============================================================================
+
+networks:
+  orbitcommerce-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
+  rabbitmq-data:
+  grafana-data:
+  prometheus-data:
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PERSISTÊNCIA
+  # ---------------------------------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: orbitcommerce-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orbit
+      POSTGRES_PASSWORD: orbit_local_pw
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U orbit" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [ orbitcommerce-net ]
+
+  redis:
+    image: redis:7-alpine
+    container_name: orbitcommerce-redis
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [ orbitcommerce-net ]
+
+  # ---------------------------------------------------------------------------
+  # MENSAGERIA
+  # ---------------------------------------------------------------------------
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: orbitcommerce-kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092" # listener externo (host -> container)
+      - "9101:9101" # JMX (métricas, opcional)
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      CLUSTER_ID: fnWdhZXjR8Oy-ZWbdneQIQ
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks: [ orbitcommerce-net ]
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: orbitcommerce-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: orbitcommerce
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on: [ kafka ]
+    networks: [ orbitcommerce-net ]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: orbitcommerce-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672" # protocolo AMQP
+      - "15672:15672" # painel de management (usuário/senha: orbit/orbit_local_pw)
+    environment:
+      RABBITMQ_DEFAULT_USER: orbit
+      RABBITMQ_DEFAULT_PASS: orbit_local_pw
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [ orbitcommerce-net ]
+
+  # ---------------------------------------------------------------------------
+  # OBSERVABILIDADE
+  # ---------------------------------------------------------------------------
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: orbitcommerce-otel-collector
+    restart: unless-stopped
+    command: [ "--config=/etc/otel-collector-config.yml" ]
+    volumes:
+      - ./infra/otel-collector/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC (serviços enviam traces/metrics aqui)
+      - "4318:4318" # OTLP HTTP
+    depends_on: [ jaeger ]
+    networks: [ orbitcommerce-net ]
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: orbitcommerce-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686" # UI do Jaeger -> http://localhost:16686
+    networks: [ orbitcommerce-net ]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: orbitcommerce-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090" # UI do Prometheus -> http://localhost:9090
+    networks: [ orbitcommerce-net ]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: orbitcommerce-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: orbit
+      GF_SECURITY_ADMIN_PASSWORD: orbit_local_pw
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000" # UI do Grafana -> http://localhost:3000
+    depends_on: [ prometheus ]
+    networks: [ orbitcommerce-net ]
+  # ---------------------------------------------------------------------------
+  # SERVIÇOS DE APLICAÇÃO
+  # Descomente cada bloco conforme for implementando o respectivo serviço.
+  # Todos compartilham a rede orbitcommerce-net e falam com postgres/redis/
+  # kafka/rabbitmq pelo nome do serviço (DNS interno do Compose).
+  # ---------------------------------------------------------------------------
+
+  # api-gateway:
+  #   build: ./services/api-gateway
+  #   container_name: orbitcommerce-api-gateway
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on: [identity-service, catalog-service, order-service]
+  #   networks: [orbitcommerce-net]
+
+  # identity-service:
+  #   build: ./services/identity-service
+  #   container_name: orbitcommerce-identity-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/identity_db
+  #     - SPRING_DATASOURCE_USERNAME=orbit
+  #     - SPRING_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - SPRING_DATA_REDIS_HOST=redis
+  #     - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redis: { condition: service_healthy }
+  #     kafka: { condition: service_started }
+  #   networks: [orbitcommerce-net]
+
+  # catalog-service:
+  #   build: ./services/catalog-service
+  #   container_name: orbitcommerce-catalog-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8082:8082"
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/catalog_db
+  #     - SPRING_DATASOURCE_USERNAME=orbit
+  #     - SPRING_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - SPRING_DATA_REDIS_HOST=redis
+  #     - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redis: { condition: service_healthy }
+  #   networks: [orbitcommerce-net]
+
+  # order-service:
+  #   build: ./services/order-service
+  #   container_name: orbitcommerce-order-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8083:8083"
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/order_db
+  #     - SPRING_DATASOURCE_USERNAME=orbit
+  #     - SPRING_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - SPRING_DATA_REDIS_HOST=redis
+  #     - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     kafka: { condition: service_started }
+  #   networks: [orbitcommerce-net]
+
+  # inventory-service:
+  #   build: ./services/inventory-service
+  #   container_name: orbitcommerce-inventory-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8084:8084"
+  #   environment:
+  #     - QUARKUS_DATASOURCE_REACTIVE_URL=postgresql://postgres:5432/inventory_db
+  #     - QUARKUS_DATASOURCE_USERNAME=orbit
+  #     - QUARKUS_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     kafka: { condition: service_started }
+  #   networks: [orbitcommerce-net]
+
+  # payment-service:
+  #   build: ./services/payment-service
+  #   container_name: orbitcommerce-payment-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8085:8085"
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=docker
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
+  #     - SPRING_DATASOURCE_USERNAME=orbit
+  #     - SPRING_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     kafka: { condition: service_started }
+  #   networks: [orbitcommerce-net]
+
+  # shipping-service:
+  #   build: ./services/shipping-service
+  #   container_name: orbitcommerce-shipping-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8086:8086"
+  #   environment:
+  #     - QUARKUS_DATASOURCE_REACTIVE_URL=postgresql://postgres:5432/shipping_db
+  #     - QUARKUS_DATASOURCE_USERNAME=orbit
+  #     - QUARKUS_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - RABBITMQ_HOST=rabbitmq
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     kafka: { condition: service_started }
+  #     rabbitmq: { condition: service_healthy }
+  #   networks: [orbitcommerce-net]
+
+  # notification-service:
+  #   build: ./services/notification-service
+  #   container_name: orbitcommerce-notification-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8087:8087"
+  #   environment:
+  #     - QUARKUS_DATASOURCE_REACTIVE_URL=postgresql://postgres:5432/notification_db
+  #     - QUARKUS_DATASOURCE_USERNAME=orbit
+  #     - QUARKUS_DATASOURCE_PASSWORD=orbit_local_pw
+  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - RABBITMQ_HOST=rabbitmq
+  #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     kafka: { condition: service_started }
+  #     rabbitmq: { condition: service_healthy }
+  #   networks: [orbitcommerce-net]
