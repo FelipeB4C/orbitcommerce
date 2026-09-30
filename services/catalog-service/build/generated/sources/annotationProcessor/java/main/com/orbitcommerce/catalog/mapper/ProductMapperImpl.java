@@ -1,0 +1,283 @@
+package com.orbitcommerce.catalog.mapper;
+
+import com.orbitcommerce.catalog.enums.ProductStatus;
+import com.orbitcommerce.catalog.model.Category;
+import com.orbitcommerce.catalog.model.Product;
+import com.orbitcommerce.catalog.model.ProductImage;
+import com.orbitcommerce.catalog.model.ProductVariant;
+import com.orbitcommerce.catalog.model.VariantAttribute;
+import com.orbitcommerce.catalog.request.CreateProductRequest;
+import com.orbitcommerce.catalog.request.ProductVariantRequest;
+import com.orbitcommerce.catalog.request.VariantAttributeRequest;
+import com.orbitcommerce.catalog.response.CategoryResponse;
+import com.orbitcommerce.catalog.response.ProductDetailResponse;
+import com.orbitcommerce.catalog.response.ProductImageResponse;
+import com.orbitcommerce.catalog.response.ProductVariantResponse;
+import com.orbitcommerce.catalog.response.VariantAttributeResponse;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2026-09-28T19:53:40-0300",
+    comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-java-compiler-worker-9.7.1.jar, environment: Java 25 (Oracle Corporation)"
+)
+@Component
+public class ProductMapperImpl implements ProductMapper {
+
+    @Override
+    public Product toProductEntity(CreateProductRequest request) {
+        if ( request == null ) {
+            return null;
+        }
+
+        String sku = null;
+        String name = null;
+
+        sku = request.sku();
+        name = request.name();
+
+        ProductStatus status = ProductStatus.ACTIVE;
+        Category category = null;
+
+        Product product = new Product( sku, name, category, status );
+
+        product.setVariants( productVariantRequestHashSetToProductVariantList( request.variants() ) );
+        product.setDescription( request.description() );
+        product.setBrand( request.brand() );
+
+        linkBidirectionalRelationships( product );
+
+        return product;
+    }
+
+    @Override
+    public ProductVariant toVariantEntity(ProductVariantRequest variantRequest) {
+        if ( variantRequest == null ) {
+            return null;
+        }
+
+        Long priceCents = null;
+        String currency = null;
+        String stockKeepingUnit = null;
+
+        priceCents = variantRequest.priceCents();
+        currency = variantRequest.currency();
+        stockKeepingUnit = variantRequest.stockKeepingUnit();
+
+        Product product = null;
+
+        ProductVariant productVariant = new ProductVariant( product, priceCents, currency, stockKeepingUnit );
+
+        if ( productVariant.getVariantAttributes() != null ) {
+            List<VariantAttribute> list = variantAttributeRequestHashSetToVariantAttributeList( variantRequest.attributes() );
+            if ( list != null ) {
+                productVariant.getVariantAttributes().addAll( list );
+            }
+        }
+
+        return productVariant;
+    }
+
+    @Override
+    public VariantAttribute toAttributeEntity(VariantAttributeRequest attributeRequest) {
+        if ( attributeRequest == null ) {
+            return null;
+        }
+
+        String attributeName = null;
+        String attributeValue = null;
+
+        attributeName = attributeRequest.name();
+        attributeValue = attributeRequest.value();
+
+        VariantAttribute variantAttribute = new VariantAttribute( attributeName, attributeValue );
+
+        return variantAttribute;
+    }
+
+    @Override
+    public ProductDetailResponse toProductDetailResponse(Product product) {
+        if ( product == null ) {
+            return null;
+        }
+
+        String id = null;
+        String sku = null;
+        String name = null;
+        String description = null;
+        String brand = null;
+        String status = null;
+        CategoryResponse category = null;
+        HashSet<ProductVariantResponse> variants = null;
+        HashSet<ProductImageResponse> images = null;
+
+        if ( product.getId() != null ) {
+            id = product.getId().toString();
+        }
+        sku = product.getSku();
+        name = product.getName();
+        description = product.getDescription();
+        brand = product.getBrand();
+        if ( product.getStatus() != null ) {
+            status = product.getStatus().name();
+        }
+        category = toCategoryResponse( product.getCategory() );
+        variants = productVariantListToProductVariantResponseHashSet( product.getVariants() );
+        images = productImageListToProductImageResponseHashSet( product.getImages() );
+
+        ProductDetailResponse productDetailResponse = new ProductDetailResponse( id, sku, name, description, brand, status, category, variants, images );
+
+        return productDetailResponse;
+    }
+
+    @Override
+    public CategoryResponse toCategoryResponse(Category category) {
+        if ( category == null ) {
+            return null;
+        }
+
+        String id = null;
+        String name = null;
+        String slug = null;
+
+        if ( category.getId() != null ) {
+            id = category.getId().toString();
+        }
+        name = category.getName();
+        slug = category.getSlug();
+
+        CategoryResponse categoryResponse = new CategoryResponse( id, name, slug );
+
+        return categoryResponse;
+    }
+
+    @Override
+    public ProductVariantResponse toProductVariantResponse(ProductVariant productVariant) {
+        if ( productVariant == null ) {
+            return null;
+        }
+
+        HashSet<VariantAttributeResponse> attributes = null;
+        String sku = null;
+        String id = null;
+        Long priceCents = null;
+        String currency = null;
+
+        attributes = variantAttributeListToVariantAttributeResponseHashSet( productVariant.getVariantAttributes() );
+        sku = productVariant.getStockKeepingUnit();
+        if ( productVariant.getId() != null ) {
+            id = productVariant.getId().toString();
+        }
+        priceCents = productVariant.getPriceCents();
+        currency = productVariant.getCurrency();
+
+        ProductVariantResponse productVariantResponse = new ProductVariantResponse( id, attributes, priceCents, currency, sku );
+
+        return productVariantResponse;
+    }
+
+    @Override
+    public VariantAttributeResponse toVariantAttributeResponse(VariantAttribute variantAttribute) {
+        if ( variantAttribute == null ) {
+            return null;
+        }
+
+        String name = null;
+        String value = null;
+
+        name = variantAttribute.getAttributeName();
+        value = variantAttribute.getAttributeValue();
+
+        VariantAttributeResponse variantAttributeResponse = new VariantAttributeResponse( name, value );
+
+        return variantAttributeResponse;
+    }
+
+    @Override
+    public ProductImageResponse toProductImageResponse(ProductImage product) {
+        if ( product == null ) {
+            return null;
+        }
+
+        String url = null;
+        String altText = null;
+        Integer position = null;
+
+        url = product.getUrl();
+        altText = product.getAltText();
+        position = product.getPosition();
+
+        ProductImageResponse productImageResponse = new ProductImageResponse( url, altText, position );
+
+        return productImageResponse;
+    }
+
+    protected List<ProductVariant> productVariantRequestHashSetToProductVariantList(HashSet<ProductVariantRequest> hashSet) {
+        if ( hashSet == null ) {
+            return null;
+        }
+
+        List<ProductVariant> list = new ArrayList<ProductVariant>( hashSet.size() );
+        for ( ProductVariantRequest productVariantRequest : hashSet ) {
+            list.add( toVariantEntity( productVariantRequest ) );
+        }
+
+        return list;
+    }
+
+    protected List<VariantAttribute> variantAttributeRequestHashSetToVariantAttributeList(HashSet<VariantAttributeRequest> hashSet) {
+        if ( hashSet == null ) {
+            return null;
+        }
+
+        List<VariantAttribute> list = new ArrayList<VariantAttribute>( hashSet.size() );
+        for ( VariantAttributeRequest variantAttributeRequest : hashSet ) {
+            list.add( toAttributeEntity( variantAttributeRequest ) );
+        }
+
+        return list;
+    }
+
+    protected HashSet<ProductVariantResponse> productVariantListToProductVariantResponseHashSet(List<ProductVariant> list) {
+        if ( list == null ) {
+            return null;
+        }
+
+        HashSet<ProductVariantResponse> hashSet = new HashSet<ProductVariantResponse>();
+        for ( ProductVariant productVariant : list ) {
+            hashSet.add( toProductVariantResponse( productVariant ) );
+        }
+
+        return hashSet;
+    }
+
+    protected HashSet<ProductImageResponse> productImageListToProductImageResponseHashSet(List<ProductImage> list) {
+        if ( list == null ) {
+            return null;
+        }
+
+        HashSet<ProductImageResponse> hashSet = new HashSet<ProductImageResponse>();
+        for ( ProductImage productImage : list ) {
+            hashSet.add( toProductImageResponse( productImage ) );
+        }
+
+        return hashSet;
+    }
+
+    protected HashSet<VariantAttributeResponse> variantAttributeListToVariantAttributeResponseHashSet(List<VariantAttribute> list) {
+        if ( list == null ) {
+            return null;
+        }
+
+        HashSet<VariantAttributeResponse> hashSet = new HashSet<VariantAttributeResponse>();
+        for ( VariantAttribute variantAttribute : list ) {
+            hashSet.add( toVariantAttributeResponse( variantAttribute ) );
+        }
+
+        return hashSet;
+    }
+}
