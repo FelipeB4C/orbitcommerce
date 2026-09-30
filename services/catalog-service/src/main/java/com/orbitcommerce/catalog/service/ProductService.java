@@ -1,5 +1,6 @@
 package com.orbitcommerce.catalog.service;
 
+import com.orbitcommerce.catalog.exception.SkuAlreadyExistException;
 import com.orbitcommerce.catalog.mapper.ProductMapper;
 import com.orbitcommerce.catalog.model.Category;
 import com.orbitcommerce.catalog.model.Product;
@@ -29,10 +30,12 @@ public class ProductService {
         Category category = categoryRepository.findById(UUID.fromString(createProductRequest.categoryId()))
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
+        if(productRepository.findBySku(createProductRequest.sku()).isPresent()) {
+            throw new SkuAlreadyExistException("Product with sku " + createProductRequest.sku() + " already exists");
+        }
+
         Product productEntity = productMapper.toProductEntity(createProductRequest);
         productEntity.setCategory(category);
-
-        System.out.println("PRODUTO: " + productEntity);
 
         Product productSaved = productRepository.save(productEntity);
 
