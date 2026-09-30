@@ -20,6 +20,12 @@ volumes:
   grafana-data:
   prometheus-data:
 
+secrets:
+  identity-jwt-private-key:
+    file: ./secrets/identity-service/jwt-private.pem
+  identity-jwt-public-key:
+    file: ./secrets/identity-service/jwt-public.pem
+
 services:
 
   # ---------------------------------------------------------------------------
@@ -204,6 +210,13 @@ services:
   #     - SPRING_DATA_REDIS_HOST=redis
   #     - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
   #     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  #     - JWT_PRIVATE_KEY_PATH=file:/run/secrets/jwt-private.pem
+  #     - JWT_PUBLIC_KEY_PATH=file:/run/secrets/jwt-public.pem
+  #   secrets:
+  #     - source: identity-jwt-private-key
+  #       target: jwt-private.pem
+  #     - source: identity-jwt-public-key
+  #       target: jwt-public.pem
   #   depends_on:
   #     postgres: { condition: service_healthy }
   #     redis: { condition: service_healthy }
