@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - contextLoads()</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<div class="breadcrumbs">
+<a class="breadcrumb" href="../index.html">all</a> &gt; 
+<a class="breadcrumb" href="index.html">com.orbitcommerce.identity.IdentityServiceApplicationTests</a> &gt; 
+<span class="breadcrumb">contextLoads()</span>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="failureGroup" href="#">Gradle Test Run :test</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Gradle Test Run :test</h2>
+<h1>contextLoads()</h1>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="" href="#">summary</a>
+</li>
+</ul>
+<div class="tab">
+<h2>summary</h2>
+<div>
+<div class="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox">
+<div class="counter">1</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox">
+<div class="counter">1</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox">
+<div class="counter">0</div>
+<p>skipped</p>
+</div>
+</td>
+<td>
+<div class="infoBox duration">
+<div class="counter">0.012s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox failures successRate">
+<div class="percent">0%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="result-details">
+<h3>Failure details</h3>
+<span class="code">
+<pre id="root-0-test-failure-contextLoads()">java.lang.IllegalStateException: Failed to load ApplicationContext for [WebMergedContextConfiguration@59ffb0af testClass = com.orbitcommerce.identity.IdentityServiceApplicationTests, locations = [], classes = [com.orbitcommerce.identity.IdentityServiceApplication], contextInitializerClasses = [], activeProfiles = [], propertySourceDescriptors = [], propertySourceProperties = [&quot;org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true&quot;], contextCustomizers = [org.springframework.boot.testcontainers.service.connection.ServiceConnectionContextCustomizer@0, org.springframework.boot.micrometer.metrics.test.autoconfigure.MetricsContextCustomizerFactory$DisableMetricsExportContextCustomizer@1f, org.springframework.boot.webmvc.test.autoconfigure.WebDriverContextCustomizer@6ac97b84, org.springframework.boot.web.server.context.SpringBootTestRandomPortContextCustomizer@2d0bfb24, org.springframework.boot.test.autoconfigure.OnFailureConditionReportContextCustomizerFactory$OnFailureConditionReportContextCustomizer@286b39c2, [ImportsContextCustomizer@d6d88b1 key = [com.orbitcommerce.identity.TestcontainersConfiguration]], org.springframework.boot.test.context.PropertyMappingContextCustomizer@0, org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@19593091, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@56ccd751, org.springframework.test.context.support.DynamicPropertiesContextCustomizer@0, org.springframework.boot.test.context.SpringBootTestAnnotation@dd1bb0c0], resourceBasePath = &quot;src/main/webapp&quot;, contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.lambda$loadContext$0(DefaultCacheAwareContextLoaderDelegate.java:195)
+	at org.springframework.test.context.cache.DefaultContextCache.put(DefaultContextCache.java:214)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:160)
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:128)
+	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:200)
+	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:139)
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:242)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1716)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:570)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:560)
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:153)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:176)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:265)
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:632)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/hibernate/autoconfigure/HibernateJpaConfiguration.class]: Failed to initialize dependency 'flywayInitializer' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:322)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:977)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:621)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$2(SpringBootContextLoader.java:155)
+	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58)
+	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46)
+	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1465)
+	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:600)
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:155)
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:114)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:247)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.lambda$loadContext$0(DefaultCacheAwareContextLoaderDelegate.java:167)
+	... 21 more
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1815)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:603)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:196)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:309)
+	... 36 more
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:165)
+	at org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at org.flywaydb.core.Flyway.lambda$migrate$3(Flyway.java:231)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:236)
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:120)
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:181)
+	at org.springframework.boot.flyway.autoconfigure.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:67)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1862)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1811)
+	... 43 more
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:251)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:134)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 63 more
+Caused by: org.postgresql.util.PSQLException: ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2993)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2656)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:446)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:533)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:449)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:371)
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:356)
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:332)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:327)
+	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:229)
+	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:207)
+	... 69 more
+Cause 1: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/hibernate/autoconfigure/HibernateJpaConfiguration.class]: Failed to initialize dependency 'flywayInitializer' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at app//org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:322)
+	at app//org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201)
+	at app//org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:977)
+	at app//org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:621)
+	at app//org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at app//org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at app//org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at app//org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$2(SpringBootContextLoader.java:155)
+	at app//org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58)
+	at app//org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46)
+	at app//org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1465)
+	at app//org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:600)
+	at app//org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:155)
+	at app//org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:114)
+	at app//org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:247)
+	at app//org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.lambda$loadContext$0(DefaultCacheAwareContextLoaderDelegate.java:167)
+	at app//org.springframework.test.context.cache.DefaultContextCache.put(DefaultContextCache.java:214)
+	at app//org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:160)
+	at app//org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:128)
+	at app//org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:200)
+	at app//org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:139)
+	at app//org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+	at app//org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:242)
+	at java.base@25.0.4.1/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:186)
+	at java.base@25.0.4.1/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+	at java.base@25.0.4.1/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:197)
+	at java.base@25.0.4.1/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+	at java.base@25.0.4.1/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1716)
+	at java.base@25.0.4.1/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:570)
+	at java.base@25.0.4.1/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:560)
+	at java.base@25.0.4.1/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:153)
+	at java.base@25.0.4.1/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:176)
+	at java.base@25.0.4.1/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:265)
+	at java.base@25.0.4.1/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:632)
+	at java.base@25.0.4.1/java.util.Optional.orElseGet(Optional.java:364)
+	at java.base@25.0.4.1/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base@25.0.4.1/java.util.ArrayList.forEach(ArrayList.java:1604)
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1815)
+	at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:603)
+	at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at app//org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at app//org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at app//org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at app//org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:196)
+	at app//org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:309)
+	... 36 more
+Caused by: org.flywaydb.core.internal.exception.FlywayMigrateException: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at app//org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:399)
+	at app//org.flywaydb.core.internal.command.DbMigrate.lambda$applyMigrations$1(DbMigrate.java:283)
+	at app//org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at app//org.flywaydb.core.internal.command.DbMigrate.applyMigrations(DbMigrate.java:282)
+	at app//org.flywaydb.core.internal.command.DbMigrate.migrateGroup(DbMigrate.java:255)
+	at app//org.flywaydb.core.internal.command.DbMigrate.lambda$migrateAll$0(DbMigrate.java:153)
+	at app//org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:77)
+	at app//org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.lambda$execute$0(PostgreSQLAdvisoryLockTemplate.java:60)
+	at app//org.flywaydb.core.internal.jdbc.TransactionalExecutionTemplate.execute(TransactionalExecutionTemplate.java:59)
+	at app//org.flywaydb.database.postgresql.PostgreSQLAdvisoryLockTemplate.execute(PostgreSQLAdvisoryLockTemplate.java:60)
+	at app//org.flywaydb.database.postgresql.PostgreSQLConnection.lock(PostgreSQLConnection.java:105)
+	at app//org.flywaydb.core.internal.schemahistory.JdbcTableSchemaHistory.lock(JdbcTableSchemaHistory.java:165)
+	at app//org.flywaydb.core.internal.command.DbMigrate.migrateAll(DbMigrate.java:153)
+	at app//org.flywaydb.core.internal.command.DbMigrate.migrate(DbMigrate.java:104)
+	at app//org.flywaydb.core.Flyway.lambda$migrate$3(Flyway.java:231)
+	at app//org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:236)
+	at app//org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:120)
+	at app//org.flywaydb.core.Flyway.migrate(Flyway.java:181)
+	at app//org.springframework.boot.flyway.autoconfigure.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:67)
+	at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1862)
+	at app//org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1811)
+	... 43 more
+Caused by: org.flywaydb.core.internal.sqlscript.FlywaySqlScriptException: Failed to execute script V6__insert_users.sql
+---------------------------------------------
+SQL State  : 23503
+Error Code : 0
+Message    : ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+Location   : db/migration/V6__insert_users.sql (/home/felipe/Documentos/Desenvolvimento/OrbitCommerce - Quebec Project/Orbit Commerce/identity-service/build/resources/main/db/migration/V6__insert_users.sql)
+Line       : 8
+Statement  : Run Flyway with -X option to see the actual statement causing the problem
+
+	at app//org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.handleException(DefaultSqlScriptExecutor.java:251)
+	at app//org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:212)
+	at app//org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.execute(DefaultSqlScriptExecutor.java:134)
+	at app//org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.executeOnce(SqlMigrationExecutor.java:75)
+	at app//org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.lambda$execute$0(SqlMigrationExecutor.java:66)
+	at app//org.flywaydb.core.internal.database.DefaultExecutionStrategy.execute(DefaultExecutionStrategy.java:31)
+	at app//org.flywaydb.core.internal.resolver.sql.SqlMigrationExecutor.execute(SqlMigrationExecutor.java:65)
+	at app//org.flywaydb.core.internal.command.DbMigrate.doMigrateGroup(DbMigrate.java:391)
+	... 63 more
+Caused by: org.postgresql.util.PSQLException: ERROR: insert or update on table &quot;user_roles&quot; violates foreign key constraint &quot;user_roles_role_id_fkey&quot;
+  Detalhe: Key (role_id)=(54a285f4-ebb7-4e8f-ba9a-91d50b448c15) is not present in table &quot;roles&quot;.
+	at app//org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2993)
+	at app//org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2656)
+	at app//org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:446)
+	at app//org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:533)
+	at app//org.postgresql.jdbc.PgStatement.execute(PgStatement.java:449)
+	at app//org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:371)
+	at app//org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:356)
+	at app//org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:332)
+	at app//org.postgresql.jdbc.PgStatement.execute(PgStatement.java:327)
+	at app//org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:229)
+	at app//org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:88)
+	at app//org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:207)
+	... 69 more
+
+</pre>
+<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-failure-contextLoads()">Copy</button>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 9.7.1</a> at 29 de set. de 2026 23:40:32</p>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+server:
+  port: 8081
+
+management:
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+          transport: grpc

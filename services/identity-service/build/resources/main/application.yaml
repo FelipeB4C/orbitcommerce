@@ -1,0 +1,91 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+api:
+  security:
+    token:
+      jwt:
+        issuer: "Orbit Commerce"
+        type: "Bearer"
+        expiration-time: 1000
+        private-key-path: ${JWT_PRIVATE_KEY_PATH}
+        public-key-path: ${JWT_PUBLIC_KEY_PATH}
+      refresh:
+        prefix-blacklist: "BLACKLIST:TOKEN:"
+        expiration-time: 10000
+    role:
+      admin: "ROLE_ADMIN"
+
+spring:
+  application:
+    name: identity-service
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/identity_db}
+    username: ${SPRING_DATASOURCE_USERNAME:orbit}
+    password: ${SPRING_DATASOURCE_PASSWORD:orbit_local_pw}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  flyway:
+    enabled: true
+
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      # Exige que todos os nós do cluster Kafka confirmem o recebimento
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+      # Serializa a chave (userId) e o valor (JSON) como String pura
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    event-version: 1
+
+# Observability: expose prometheus metrics and configure tracing exporter (Jaeger/OTel)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  datasource:
+    metrics:
+      enabled: true

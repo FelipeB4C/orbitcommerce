@@ -96,10 +96,32 @@ Mantenha as configurações existentes de `build`, `ports`, `networks`,
 `depends_on` e demais variáveis do serviço ao incorporar esse exemplo. O
 Compose local disponibiliza os secrets em `/run/secrets/` dentro do container.
 
-> **Importante:** neste projeto, `application.yaml` ainda pode estar apontando
-> para `classpath:certs/app.key` e `classpath:certs/app.pub`. Enquanto essa
-> configuração e o Compose não forem adaptados para os caminhos acima, gerar
-> os arquivos não basta para o serviço usá-los.
+O `application.yaml` do serviço lê os caminhos por essas variáveis. Sem elas,
+o serviço não inicia, o que evita recorrer silenciosamente a uma chave
+versionada ou compartilhada.
+
+## Integração com o Compose geral
+
+O perfil `docker` configura o serviço para escutar na porta `8081` e enviar
+traces por OTLP gRPC para `OTEL_EXPORTER_OTLP_ENDPOINT`, que no Compose geral
+aponta para `http://otel-collector:4317`. Isso corresponde à publicação
+`8081:8081` e à variável `SPRING_PROFILES_ACTIVE=docker` do Compose. O serviço
+e a infraestrutura devem permanecer na rede `orbitcommerce-net`.
+
+As variáveis de Postgres, Redis e Kafka já definidas no Compose geral são
+consumidas pela configuração Spring do serviço. Para as chaves, acrescente as
+declarações e montagens de secrets mostradas acima e também estas variáveis no
+`environment` do `identity-service`:
+
+```yaml
+- JWT_PRIVATE_KEY_PATH=file:/run/secrets/jwt-private.pem
+- JWT_PUBLIC_KEY_PATH=file:/run/secrets/jwt-public.pem
+```
+
+O Compose geral não precisa alterar a porta nem o endpoint OTLP para esse
+serviço. Ao executar a aplicação fora do Docker, sem o perfil `docker`, ela
+continua usando a porta `8080` e o endpoint local configurado em
+`application.yaml`.
 
 ## Executar e compartilhar o ambiente
 
