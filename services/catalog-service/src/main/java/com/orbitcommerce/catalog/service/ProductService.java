@@ -1,5 +1,6 @@
 package com.orbitcommerce.catalog.service;
 
+import com.orbitcommerce.catalog.exception.BusinessException;
 import com.orbitcommerce.catalog.exception.SkuAlreadyExistException;
 import com.orbitcommerce.catalog.mapper.ProductMapper;
 import com.orbitcommerce.catalog.model.Category;
@@ -41,6 +42,14 @@ public class ProductService {
 
         return productMapper.toProductDetailResponse(productSaved);
     }
+
+
+    public ProductDetailResponse findProductBySku(String sku) {
+        Product product = productRepository.findBySku(sku)
+                .orElseThrow(() -> new BusinessException("Product not found"));
+        return productMapper.toProductDetailResponse(product);
+    }
+
 
 
 }

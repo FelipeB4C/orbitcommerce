@@ -5,16 +5,13 @@ import com.orbitcommerce.catalog.response.ProductDetailResponse;
 import com.orbitcommerce.catalog.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -30,5 +27,12 @@ public class ProductController {
         URI uri =  uriBuilder.path("/product/{id}").buildAndExpand(product.id()).toUri();
         return ResponseEntity.created(uri).body(product);
     }
+
+    @GetMapping("/{sku}")
+    public ResponseEntity<ProductDetailResponse> findProductBySku(@PathVariable String sku) {
+        productService.findProductBySku(sku);
+        return ResponseEntity.ok().body(productService.findProductBySku(sku));
+    }
+
 
 }
