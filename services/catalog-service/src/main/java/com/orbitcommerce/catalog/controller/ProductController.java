@@ -1,6 +1,7 @@
 package com.orbitcommerce.catalog.controller;
 
 import com.orbitcommerce.catalog.request.CreateProductRequest;
+import com.orbitcommerce.catalog.request.PriceVariantUpdateRequest;
 import com.orbitcommerce.catalog.response.ProductDetailResponse;
 import com.orbitcommerce.catalog.service.ProductService;
 import jakarta.validation.Valid;
@@ -32,6 +33,15 @@ public class ProductController {
     public ResponseEntity<ProductDetailResponse> findProductBySku(@PathVariable String sku) {
         productService.findProductBySku(sku);
         return ResponseEntity.ok().body(productService.findProductBySku(sku));
+    }
+
+    @PatchMapping("/{sku}/variants/{variantId}/price")
+    public ResponseEntity<Void> updatePriceHistory(@RequestBody @Valid
+                                                   PriceVariantUpdateRequest request,
+                                                   @PathVariable String sku,
+                                                   @PathVariable String variantId) {
+        productService.updatePriceVariant(request,  sku, variantId);
+        return ResponseEntity.noContent().build();
     }
 
 

@@ -4,14 +4,20 @@ import com.orbitcommerce.catalog.exception.BusinessException;
 import com.orbitcommerce.catalog.exception.SkuAlreadyExistException;
 import com.orbitcommerce.catalog.mapper.ProductMapper;
 import com.orbitcommerce.catalog.model.Category;
+import com.orbitcommerce.catalog.model.VariantPrice;
 import com.orbitcommerce.catalog.model.Product;
+import com.orbitcommerce.catalog.model.ProductVariant;
 import com.orbitcommerce.catalog.repository.CategoryRepository;
 import com.orbitcommerce.catalog.repository.ProductRepository;
 import com.orbitcommerce.catalog.request.CreateProductRequest;
+import com.orbitcommerce.catalog.request.PriceVariantUpdateRequest;
 import com.orbitcommerce.catalog.response.ProductDetailResponse;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -21,12 +27,14 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ProductMapper productMapper) {
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository,
+                          ProductMapper productMapper) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productMapper = productMapper;
     }
 
+    @Transactional
     public ProductDetailResponse saveProduct(CreateProductRequest createProductRequest) {
         Category category = categoryRepository.findById(UUID.fromString(createProductRequest.categoryId()))
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
@@ -51,5 +59,34 @@ public class ProductService {
     }
 
 
+    @Transactional
+    public void updatePriceVariant(PriceVariantUpdateRequest request, String sku, String variantId) {
+        Product product = productRepository.findBySku(sku)
+                .orElseThrow(() -> new BusinessException("Product not found"));
+
+        UUID id = UUID.fromString(variantId);
+        ProductVariant variant = product.getVariants().stream()
+                .filter(productVariant -> productVariant.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Variant not found"));
+
+
+        Optional<VariantPrice> activePrice = variant.getVariantPrice().stream()
+                .filter(history -> history.getEffectiveTo() == null
+                        && history.getCurrency().equals(request.currency()))
+                .findFirst();
+
+        if (activePrice.isPresent()
+                && activePrice.get().getPriceCents().equals(request.priceCents())) {
+            return;
+        }
+
+        if (activePrice.isPresent()) {
+            activePrice.get().updatePriceHistoryEffectiveTo(Instant.now());
+            productRepository.flush();
+        }
+
+        variant.addPrice(request.currency(), request.priceCents());
+    }
 
 }

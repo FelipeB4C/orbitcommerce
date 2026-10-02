@@ -23,9 +23,22 @@ public interface ProductMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "product", ignore = true)
-    @Mapping(target = "priceHistory", ignore = true)
+    @Mapping(target = "variantPrice", ignore = true)
     @Mapping(target = "variantAttributes", source = "attributes")
     ProductVariant toVariantEntity(ProductVariantRequest variantRequest);
+
+    @AfterMapping
+    default void linkVariantRelationships(ProductVariantRequest request,
+                                         @MappingTarget ProductVariant variant) {
+        if (variant.getVariantAttributes() != null) {
+            variant.getVariantAttributes().forEach(attribute -> attribute.setProductVariant(variant));
+        }
+
+        if (request.prices() != null) {
+            request.prices().forEach(price ->
+                    variant.addInitialPrice(price.currency(), price.priceCents()));
+        }
+    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "productVariant", ignore = true)
@@ -39,14 +52,6 @@ public interface ProductMapper {
 
         product.getVariants().forEach(variant -> {
             variant.setProduct(product);
-
-            // Garante a bidirecionalidade dos atributos existentes usando o método auxiliar
-            if (variant.getVariantAttributes() != null) {
-                variant.getVariantAttributes().forEach(attr -> attr.setProductVariant(variant));
-            }
-
-            // Delega a criação da regra de preço inicial para a entidade
-            variant.addInitialPrice();
         });
     }
 
