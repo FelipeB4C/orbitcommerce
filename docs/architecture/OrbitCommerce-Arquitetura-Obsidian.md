@@ -596,10 +596,10 @@ Resposta: `204 No Content` _Erros:_ `401` não autenticado · `403` usuário aut
 
 #### 3.3.1 Responsabilidades
 
-- Manutenção do catálogo de categorias, produtos e variantes (SKUs) com seus preços vigentes.
+- Manutenção do catálogo de categorias, produtos e variantes (SKUs) com seus preços vigentes, **um por moeda** <!-- [NOVO] a variante é identidade; o preço vive em `variant_prices` -->.
 - Exposição de busca e listagem paginada de produtos para o frontend, com alta taxa de leitura.
 - Cache-aside em Redis para reduzir latência e carga no banco em consultas de produto individual.
-- Manutenção de histórico de preços para fins de auditoria e exibição de "preço anterior".
+- Manutenção de histórico de preços **por moeda** para fins de auditoria e exibição de "preço anterior" <!-- [NOVO] o histórico são as linhas encerradas de `variant_prices` -->.
 - Publicação de eventos de alteração de preço/estoque de catálogo consumidos por outros serviços (ex.: invalidação de cache de terceiros, motor de busca).
 
 #### 3.3.2 Stack Específica
@@ -608,7 +608,7 @@ Resposta: `204 No Content` _Erros:_ `401` não autenticado · `403` usuário aut
 |---|---|
 |Framework|Spring Boot 4 (Spring Web MVC, Spring Data JPA)|
 |Banco de dados|PostgreSQL 16 — schema `catalog_db`|
-|Cache|Redis — chave `product:{sku}`, TTL 300s, invalidação ativa em updates|
+|Cache|Redis — chave `product:{sku}:{currency}` <!-- [NOVO] chave por moeda -->, TTL 300s, invalidação ativa em updates (cadastro, atualização e encerramento de preço invalidam a chave da moeda afetada)|
 |Busca (evolução futura)|Desenhado para admitir indexação em Elasticsearch/Amazon OpenSearch Service sem alterar o modelo de domínio|
 
 ```mermaid
@@ -635,11 +635,10 @@ classDiagram
         +Instant updatedAt
     }
 
+    %% [ATUALIZADO] priceCents/currency removidos da variante — o preço agora vive em VariantPrice (um por moeda)
     class ProductVariant {
         +UUID id
         +UUID productId
-        +Long priceCents
-        +String currency
         +String stockKeepingUnit
     }
 
@@ -659,9 +658,11 @@ classDiagram
         +Integer position
     }
 
-    class PriceHistory {
+    %% [NOVO] substitui PriceHistory: uma linha por variante+moeda+período; effectiveTo nulo = sem data de fim
+    class VariantPrice {
         +UUID id
         +UUID productVariantId
+        +String currency
         +Long priceCents
         +Instant effectiveFrom
         +Instant effectiveTo
@@ -679,7 +680,7 @@ classDiagram
     Product "1" --> "1..*" ProductVariant
     Product "1" --> "0..*" ProductImage
     ProductVariant "1" --> "1..*" VariantAttribute
-    ProductVariant "1" --> "0..*" PriceHistory
+    ProductVariant "1" --> "0..*" VariantPrice
     Product ..> ProductStatus
 ```
 
@@ -713,8 +714,7 @@ CREATE TABLE product_variants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     -- [ATUALIZADO] attribute_name/attribute_value removidos daqui — ver variant_attributes abaixo
-    price_cents BIGINT NOT NULL,
-    currency CHAR(3) NOT NULL DEFAULT 'CAD',
+    -- [ATUALIZADO] price_cents/currency removidos daqui — ver variant_prices abaixo
     stock_keeping_unit VARCHAR(40) NOT NULL UNIQUE
 );
 
@@ -736,12 +736,31 @@ CREATE TABLE product_images (
     position INT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE price_history (
+-- [NOVO] necessário para usar UUID/CHAR em exclusion constraint com gist
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+-- [NOVO] substitui price_history: 1 linha por variante + moeda + período de vigência.
+-- Preço vigente = effective_from <= now() AND (effective_to IS NULL OR effective_to > now()).
+-- Linhas com effective_to no passado formam o histórico. Sem linha vigente para uma moeda,
+-- a variante não é vendida naquela moeda.
+CREATE TABLE variant_prices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_variant_id UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-    price_cents BIGINT NOT NULL,
+    currency CHAR(3) NOT NULL, -- ISO 4217 (CAD, USD, BRL...)
+    price_cents BIGINT NOT NULL CHECK (price_cents >= 0),
     effective_from TIMESTAMPTZ NOT NULL,
-    effective_to TIMESTAMPTZ
+    effective_to TIMESTAMPTZ, -- NULL = sem data de fim
+    -- fim sempre posterior ao início
+    CONSTRAINT ck_variant_prices_period
+        CHECK (effective_to IS NULL OR effective_to > effective_from),
+    -- impede períodos sobrepostos para a mesma variante e moeda (cobre encerramento agendado);
+    -- o intervalo [) permite fechar a linha antiga e abrir a nova no mesmo instante
+    CONSTRAINT ex_variant_prices_no_overlap
+        EXCLUDE USING gist (
+            product_variant_id WITH =,
+            currency WITH =,
+            tstzrange(effective_from, effective_to, '[)') WITH &&
+        )
 );
 ```
 
@@ -752,7 +771,7 @@ erDiagram
     PRODUCTS ||--o{ PRODUCT_VARIANTS : "1:N"
     PRODUCT_VARIANTS ||--o{ VARIANT_ATTRIBUTES : "1:N"
     PRODUCTS ||--o{ PRODUCT_IMAGES : "1:N"
-    PRODUCT_VARIANTS ||--o{ PRICE_HISTORY : "1:N"
+    PRODUCT_VARIANTS ||--o{ VARIANT_PRICES : "1:N"
 
     CATEGORIES {
         UUID id PK
@@ -777,8 +796,6 @@ erDiagram
     PRODUCT_VARIANTS {
         UUID id PK
         UUID product_id FK
-        BIGINT price_cents
-        CHAR currency
         VARCHAR stock_keeping_unit UK
     }
 
@@ -797,12 +814,13 @@ erDiagram
         INT position
     }
 
-    PRICE_HISTORY {
+    VARIANT_PRICES {
         UUID id PK
         UUID product_variant_id FK
+        CHAR currency
         BIGINT price_cents
         TIMESTAMPTZ effective_from
-        TIMESTAMPTZ effective_to
+        TIMESTAMPTZ effective_to "nullable"
     }
 ```
 
@@ -810,7 +828,9 @@ erDiagram
 
 #### 3.3.6 Especificação de API
 
-**`GET /api/v1/products`** — Lista produtos com paginação e filtros. _Query params:_ `page` (int, padrão 0) · `size` (int, padrão 20, máx. 100) · `categorySlug` (string, opcional) · `q` (string, busca textual, opcional)
+**`GET /api/v1/products`** — Lista produtos com paginação e filtros. _Query params:_ `page` (int, padrão 0) · `size` (int, padrão 20, máx. 100) · `categorySlug` (string, opcional) · `q` (string, busca textual, opcional) · `currency` (string ISO 4217, opcional, padrão `CAD`) <!-- [NOVO] -->
+
+<!-- [NOVO] --> `priceCents`/`currency` na resposta são o menor preço vigente entre as variantes do produto na moeda solicitada; produtos sem preço vigente nessa moeda não aparecem na listagem.
 
 ```json
 // RESPONSE 200 OK
@@ -821,7 +841,7 @@ erDiagram
 }
 ```
 
-**`GET /api/v1/products/{sku}`** — Detalha um produto por SKU, com variantes, imagens e preço vigente. Consulta cache-aside (ver [[#4.4 Consulta de Catálogo com Cache Redis|Figura 4.4]]).
+**`GET /api/v1/products/{sku}`** — Detalha um produto por SKU, com variantes, imagens e preço vigente na moeda solicitada (_query param_ `currency`, opcional, padrão `CAD`) <!-- [NOVO] -->. Consulta cache-aside (ver [[#4.4 Consulta de Catálogo com Cache Redis|Figura 4.4]]).
 
 ```json
 // RESPONSE 200 OK
@@ -831,10 +851,12 @@ erDiagram
   "category": { "id": "uuid", "name": "string", "slug": "string" },
   "variants": [ { "id": "uuid",
     "attributes": [ { "name": "size", "value": "M" }, { "name": "color", "value": "azul" } ],
-    "priceCents": 12990, "currency": "CAD", "sku": "string" } ],
+    "price": { "priceCents": 12990, "currency": "CAD" }, "sku": "string" } ],
   "images": [ { "url": "string", "altText": "string", "position": 0 } ]
 }
 ```
+
+<!-- [NOVO] --> `variants[].price` é `null` quando a variante não tem preço vigente na moeda solicitada (não vendável nessa moeda).
 
 _Erros:_ `404` produto não encontrado
 
@@ -846,26 +868,44 @@ _Erros:_ `404` produto não encontrado
   "sku": "string", "name": "string", "description": "string",
   "categoryId": "uuid", "brand": "string",
   "variants": [ { "attributes": [ { "name": "size", "value": "M" }, { "name": "color", "value": "azul" } ],
-    "priceCents": 12990, "currency": "CAD", "stockKeepingUnit": "string" } ]
+    "prices": [ { "currency": "CAD", "priceCents": 12990 }, { "currency": "USD", "priceCents": 9990 } ],
+    "stockKeepingUnit": "string" } ]
 }
 ```
 
 Resposta: `201 Created`, corpo igual ao GET por SKU _Erros:_ `400` validação · `403` sem permissão · `409` SKU duplicado
 
-**`PUT /api/v1/products/{sku}/variants/{variantId}/price`** — Atualiza o preço de uma variante; a alteração fecha o registro vigente em `price_history` e abre um novo, além de invalidar o cache Redis daquele produto.
+<!-- [NOVO] --> `prices[]` é opcional e aceita uma entrada por moeda (cada uma vira uma linha de `variant_prices` com `effective_from = now()`); moeda repetida ou fora do padrão ISO 4217 retorna `422`.
+
+<!-- [ATUALIZADO] rota agora é por moeda; o body não carrega mais `currency` (vem do path) -->
+**`PUT /api/v1/products/{sku}/variants/{variantId}/prices/{currency}`** — Cadastra ou atualiza o preço de uma variante em uma moeda. Sem preço vigente nessa moeda: cria a linha em `variant_prices` com `effective_from = now()`. Com preço vigente: fecha a linha vigente (`effective_to = now()`) e abre uma nova, na mesma transação. Valor igual ao vigente: sem alteração. Em todos os casos invalida a chave de cache `product:{sku}:{currency}`. Requer `ROLE_ADMIN` ou `ROLE_SELLER`.
 
 ```json
 // REQUEST BODY
-{ "priceCents": 11990, "currency": "CAD" }
+{ "priceCents": 11990 }
 ```
 
-Resposta: `200 OK`
+Resposta: `201 Created` (primeiro preço da moeda) ou `200 OK` (atualização) _Erros:_ `400` valor inválido · `403` sem permissão · `404` produto ou variante não encontrados · `422` moeda fora do padrão ISO 4217
+
+<!-- [NOVO] -->
+**`PATCH /api/v1/products/{sku}/variants/{variantId}/prices/{currency}`** — Encerra o preço vigente de uma moeda **sem registrar novo valor** (ex.: a variante deixa de ser vendida nessa moeda). Apenas define o `effective_to` da linha vigente; o histórico é preservado. Se `effectiveTo` for omitido, assume `now()`; uma data futura agenda o encerramento. Invalida a chave de cache `product:{sku}:{currency}`. Requer `ROLE_ADMIN` ou `ROLE_SELLER`.
+
+```json
+// REQUEST BODY
+{ "effectiveTo": "2026-12-31T23:59:59Z" }
+```
+
+Resposta: `200 OK` _Erros:_ `403` sem permissão · `404` nenhum preço vigente nessa moeda · `409` preço já encerrado · `422` `effectiveTo` anterior ou igual ao `effective_from` da linha vigente
+
+> [!note] Reativar uma moeda
+> Para voltar a vender em uma moeda encerrada, basta um novo `PUT` na mesma rota: ele cria uma nova linha de `variant_prices`. O intervalo entre o encerramento e a nova linha permanece como lacuna no histórico.
 
 #### 3.3.7 Eventos
 
 |Direção|Canal|Nome|Quando|
 |---|---|---|---|
-|Publica|Kafka — tópico `catalog.price-changed`|`PriceChangedEvent`|Após atualização de preço de uma variante.|
+|Publica|Kafka — tópico `catalog.price-changed`|`PriceChangedEvent`|Após atualização do preço de uma variante em uma moeda (`oldPriceCents` nulo quando é o primeiro preço daquela moeda). <!-- [ATUALIZADO] -->|
+|Publica|Kafka — tópico `catalog.price-ended`|`PriceEndedEvent`|Após o encerramento do preço de uma variante em uma moeda, sem novo valor. <!-- [NOVO] -->|
 |Publica|Kafka — tópico `catalog.product-status-changed`|`ProductStatusChangedEvent`|Quando um produto é descontinuado/reativado (afeta a possibilidade de criação de novos pedidos).|
 
 ---
@@ -1125,6 +1165,7 @@ erDiagram
 ```json
 // REQUEST BODY
 {
+  "currency": "CAD", // [NOVO] moeda em que o cliente quer pagar; precisa ter preço vigente para todos os itens
   "items": [ { "productVariantId": "uuid", "quantity": 2 } ],
   "shippingAddress": {
     "street": "string", "city": "string", "state": "string",
@@ -1139,7 +1180,7 @@ erDiagram
   "currency": "CAD", "createdAt": "date-time" }
 ```
 
-_Erros:_ `400` itens inválidos/vazios · `401` não autenticado · `409` Idempotency-Key já processada com corpo diferente
+_Erros:_ `400` itens inválidos/vazios · `401` não autenticado · `409` Idempotency-Key já processada com corpo diferente · `422` algum item não tem preço vigente na moeda solicitada <!-- [NOVO] -->
 
 **`GET /api/v1/orders/{orderId}`** — Consulta detalhes e status atual de um pedido, incluindo itens e histórico de status.
 
@@ -1837,13 +1878,13 @@ Esta seção detalha, passo a passo, os quatro fluxos de execução mais importa
 
 ### 4.1 Autenticação e Validação de Token
 
-![!\[\[30-seq-login.png\]\]](img/30-seq-login.png)
+![[30-seq-login.png]]
 
 > [!info]- Figura 4.1 — Sequência de Login e Validação de Token Fluxo de login emitindo par de tokens (access + refresh), seguido de uma requisição subsequente autenticada, ilustrando a validação local de JWT no Gateway (via JWKS) combinada com verificação de sessão ativa no Identity Service.
 
 ### 4.2 Criação de Pedido — Saga (Caminho Feliz)
 
-![[31-seq-place-order-happy.png]](img/31-seq-place-order-happy.png)
+![[31-seq-place-order-happy.png]]
 
 > [!info]- Figura 4.2 — Sequência completa da Saga de Criação de Pedido (caminho feliz) Fluxo completo desde a requisição do cliente até a notificação de confirmação, passando pelas três etapas coordenadas da saga: reserva de estoque, autorização de pagamento e criação de remessa.
 > 
@@ -1851,7 +1892,7 @@ Esta seção detalha, passo a passo, os quatro fluxos de execução mais importa
 
 ### 4.3 Saga — Fluxo de Compensação
 
-![[32-seq-saga-compensation.png]](img/32-seq-saga-compensation.png)
+![[32-seq-saga-compensation.png]]
 
 > [!info]- Figura 4.3 — Sequência de Compensação da Saga (falha no pagamento) Cenário em que o gateway de pagamento recusa a transação após o estoque já ter sido reservado. O Order Service detecta a falha via evento `payment.failed`, transiciona a saga para `COMPENSATING` e dispara o comando de liberação de estoque, finalizando o pedido em `FAILED` apenas após a confirmação de que a compensação foi aplicada.
 
@@ -1859,9 +1900,9 @@ Esta seção detalha, passo a passo, os quatro fluxos de execução mais importa
 
 ### 4.4 Consulta de Catálogo com Cache Redis
 
-![[33-seq-catalog-cache.png]](img/33-seq-catalog-cache.png)
+![[33-seq-catalog-cache.png]]
 
-> [!info]- Figura 4.4 — Sequência de Leitura de Produto com Cache-Aside Padrão cache-aside aplicado à leitura de produto individual, com TTL de 300 segundos e fallback transparente ao PostgreSQL em caso de cache miss.
+> [!info]- Figura 4.4 — Sequência de Leitura de Produto com Cache-Aside Padrão cache-aside aplicado à leitura de produto individual, com TTL de 300 segundos e fallback transparente ao PostgreSQL em caso de cache miss. <!-- [ATUALIZADO] a chave de cache é por moeda (`product:{sku}:{currency}`) e o SELECT do cache miss lê `variant_prices` vigentes na moeda solicitada -->
 
 ---
 
@@ -1886,7 +1927,8 @@ Todo evento publicado no Kafka e todo comando publicado no RabbitMQ segue um env
 |Tópico|Partição/Chave|Produtor|Consumidores|Payload (principais campos)|
 |---|---|---|---|---|
 |`user.registered`|`userId`|Identity|Notification|`userId`, `fullName`, `email`|
-|`catalog.price-changed`|`productVariantId`|Catalog|(extensível: motor de busca)|`productVariantId`, `oldPriceCents`, `newPriceCents`, `currency`|
+|`catalog.price-changed`|`productVariantId`|Catalog|(extensível: motor de busca)|`productVariantId`, `oldPriceCents` (nulo no primeiro preço da moeda), `newPriceCents`, `currency`|
+|`catalog.price-ended`|`productVariantId`|Catalog|(extensível: motor de busca)|`productVariantId`, `currency`, `effectiveTo` <!-- [NOVO] -->|
 |`catalog.product-status-changed`|`productId`|Catalog|Order (validação em criação de pedido)|`productId`, `status`|
 |`order.created`|`orderId`|Order|Inventory|`orderId`, `customerId`, `items[{productVariantId, quantity}]`|
 |`inventory.reserved`|`orderId`|Inventory|Order|`orderId`, `reservations[{productVariantId, warehouseId, quantity}]`|
