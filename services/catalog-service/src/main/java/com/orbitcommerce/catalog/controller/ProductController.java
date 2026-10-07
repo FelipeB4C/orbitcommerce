@@ -4,8 +4,10 @@ import com.orbitcommerce.catalog.request.CreateProductRequest;
 import com.orbitcommerce.catalog.request.PriceEffectiveToRequest;
 import com.orbitcommerce.catalog.request.PriceVariantUpdateRequest;
 import com.orbitcommerce.catalog.response.ProductDetailResponse;
+import com.orbitcommerce.catalog.response.ProductListItemResponse;
 import com.orbitcommerce.catalog.service.ProductService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -20,6 +22,19 @@ public class ProductController {
 
     public ProductController(ProductService productService) {
         this.productService = productService;
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ProductListItemResponse>> listProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String categorySlug,
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(defaultValue = "CAD") String currency
+    ) {
+        return ResponseEntity.ok(
+                productService.listProducts(page, size, categorySlug, query, currency)
+        );
     }
 
     @PostMapping

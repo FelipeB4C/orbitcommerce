@@ -13,11 +13,16 @@ import com.orbitcommerce.catalog.request.CreateProductRequest;
 import com.orbitcommerce.catalog.request.PriceEffectiveToRequest;
 import com.orbitcommerce.catalog.request.PriceVariantUpdateRequest;
 import com.orbitcommerce.catalog.response.ProductDetailResponse;
+import com.orbitcommerce.catalog.response.ProductListItemResponse;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Currency;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,6 +62,48 @@ public class ProductService {
         Product product = productRepository.findBySku(sku)
                 .orElseThrow(() -> new BusinessException("Product not found"));
         return productMapper.toProductDetailResponse(product);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductListItemResponse> listProducts(
+            int page,
+            int size,
+            String categorySlug,
+            String query,
+            String currency
+    ) {
+        if (page < 0) {
+            throw new BusinessException("page must be greater than or equal to 0");
+        }
+        if (size < 1 || size > 100) {
+            throw new BusinessException("size must be between 1 and 100");
+        }
+
+        String normalizedCurrency = currency.trim().toUpperCase(Locale.ROOT);
+        try {
+            Currency.getInstance(normalizedCurrency);
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessException("currency must be a valid ISO 4217 code");
+        }
+
+        String normalizedCategorySlug = normalizeFilter(categorySlug);
+        String normalizedQuery = normalizeFilter(query);
+        if (normalizedQuery != null) {
+            normalizedQuery = "%" + normalizedQuery.toLowerCase(Locale.ROOT) + "%";
+        }
+        return productRepository.findCatalogPage(
+                normalizedCategorySlug,
+                normalizedQuery,
+                normalizedCurrency,
+                PageRequest.of(page, size)
+        );
+    }
+
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
 
