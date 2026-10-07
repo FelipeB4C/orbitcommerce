@@ -10,6 +10,7 @@ import com.orbitcommerce.catalog.model.ProductVariant;
 import com.orbitcommerce.catalog.repository.CategoryRepository;
 import com.orbitcommerce.catalog.repository.ProductRepository;
 import com.orbitcommerce.catalog.request.CreateProductRequest;
+import com.orbitcommerce.catalog.request.PriceEffectiveToRequest;
 import com.orbitcommerce.catalog.request.PriceVariantUpdateRequest;
 import com.orbitcommerce.catalog.response.ProductDetailResponse;
 import jakarta.persistence.EntityNotFoundException;
@@ -76,6 +77,8 @@ public class ProductService {
                         && history.getCurrency().equals(request.currency()))
                 .findFirst();
 
+
+        // Verify if the value prince in the request is the same of the registry
         if (activePrice.isPresent()
                 && activePrice.get().getPriceCents().equals(request.priceCents())) {
             return;
@@ -87,6 +90,36 @@ public class ProductService {
         }
 
         variant.addPrice(request.currency(), request.priceCents());
+    }
+
+    @Transactional
+    public void updatePriceEffectiveTo(PriceEffectiveToRequest request, String sku, String variantId) {
+
+        Product product = productRepository.findBySku(sku)
+                .orElseThrow(() -> new BusinessException("Product not found"));
+
+        UUID id = UUID.fromString(variantId);
+        ProductVariant variant = product.getVariants().stream()
+                .filter(productVariant -> productVariant.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Variant not found"));
+
+
+        VariantPrice activePrice = variant.getVariantPrice().stream()
+                .filter(history -> history.getEffectiveTo() == null
+                        && history.getCurrency().equals(request.currency()))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Active price not found"));;
+
+        Instant effectiveTo = request.effectiveTo() != null
+                ? request.effectiveTo()
+                : Instant.now();
+
+        if (!effectiveTo.isAfter(activePrice.getEffectiveFrom())) {
+            throw new BusinessException("effectiveTo must be after effectiveFrom");
+        }
+
+        activePrice.updatePriceHistoryEffectiveTo(effectiveTo);
     }
 
 }
